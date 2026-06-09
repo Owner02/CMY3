@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Учёт явки сотрудников</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #f8f9fa;
+      --text: #212529;
+      --primary: #0d6efd;
+      --danger: #dc3545;
+      --success: #198754;
+      --border: #dee2e6;
+      --radius: 0.5rem;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      border-radius: var(--radius);
+      font-weight: 500;
+    }
+    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    h2 { margin-bottom: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-weight: 500; margin-bottom: 0.25rem; }
+    input[type="date"], select, button { font-size: 1rem; padding: 0.4rem 0.75rem; }
+    input[type="date"], select { width: 100%; max-width: 300px; }
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.85; }
+    button.danger { background: var(--danger); }
+    button.success { background: var(--success); }
+    button.outline {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    .checkbox-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .checkbox-list label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: normal;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .history-item button { margin-left: 0.5rem; }
+
+    #reportPrintArea {
+      display: none;
+      padding: 2rem;
+      background: white;
+      font-size: 1rem;
+    }
+    @media print {
+      body * { visibility: hidden; }
+      #reportPrintArea, #reportPrintArea * { visibility: visible; }
+      #reportPrintArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+      }
+    }
+
+    .employee-filter { margin-bottom: 1rem; }
+    .small-btn { font-size: 0.85rem; padding: 0.25rem 0.6rem; }
+  </style>
+</head>
+<body>
+  <h1>👥 Учёт явки</h1>
+
+  <!-- Вкладки -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="attendance">✅ Отметка явки</button>
+    <button class="tab-btn" data-tab="history">📋 История</button>
+    <button class="tab-btn" data-tab="tools">⚙️ Инструменты</button>
+  </div>
+
+  <!-- Вкладка "Отметка явки" -->
+  <div class="tab-content active" id="tab-attendance">
+    <h2>Отметить смену</h2>
+    <div class="form-group">
+      <label>Дата</label>
+      <input type="date" id="attendanceDate" />
+    </div>
+    <div class="form-group">
+      <label>Смена</label>
+      <select id="shiftSelect">
+        <option value="day">🌞 Дневная</option>
+        <option value="night">🌜 Ночная</option>
+      </select>
+      <small id="autoShiftHint" style="display:block;margin-top:0.25rem;color:#6c757d;"></small>
+    </div>
+
+    <h3>Сотрудники</h3>
+    <div class="checkbox-list" id="employeeCheckboxes"></div>
+
+    <div style="margin-top:1rem; display:flex; gap:1rem; flex-wrap:wrap;">
+      <button id="saveAttendanceBtn">💾 Сохранить</button>
+      <button id="clearAttendanceBtn" class="outline">🗑 Очистить форму</button>
+    </div>
+    <div id="attendanceMsg" style="margin-top:1rem; font-weight:500;"></div>
+  </div>
+
+  <!-- Вкладка "История" -->
+  <div class="tab-content" id="tab-history">
+    <h2>История отметок</h2>
+    <div class="form-group employee-filter">
+      <label>Фильтр по сотруднику</label>
+      <select id="historyFilterEmployee">
+        <option value="">Все</option>
+      </select>
+    </div>
+    <div id="historyList"></div>
+    <button id="printLastReportBtn" class="outline small-btn" style="margin-top:1rem;">🖨 Печать последнего отчёта</button>
+  </div>
+
+  <!-- Вкладка "Инструменты" -->
+  <div class="tab-content" id="tab-tools">
+    <h2>Экспорт и импорт данных</h2>
+    <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:2rem;">
+      <button id="exportJsonBtn" class="success">📦 Экспорт JSON</button>
+      <button id="exportCsvBtn" class="success">📊 Экспорт CSV</button>
+    </div>
+    <div>
+      <h3>Импорт</h3>
+      <input type="file" id="importFile" accept=".json,.csv" style="margin-bottom:0.5rem;" />
+      <button id="importBtn" class="outline">📥 Загрузить данные</button>
+      <div id="importMsg" style="margin-top:0.5rem;"></div>
+    </div>
+    <hr style="margin:2rem 0;" />
+    <h3>Сброс всех данных</h3>
+    <button id="resetDataBtn" class="danger">⚠️ Удалить все записи</button>
+
+    <hr style="margin:2rem 0;" />
+    <h3>Настройка цикла смен</h3>
+    <p style="margin-bottom:0.5rem;">График: 2 дня днём, 2 ночью, 2 выходных. Укажите дату, когда была <strong>первая дневная смена</strong>.</p>
+    <input type="date" id="cycleStartDate" />
+    <button id="saveCycleStartBtn" class="small-btn" style="margin-left:0.5rem;">Сохранить</button>
+  </div>
+
+  <!-- Скрытая область для печати отчёта -->
+  <div id="reportPrintArea">
+    <h2 style="text-align:center;">Отчёт о явке</h2>
+    <p><strong>Дата:</strong> <span id="repDate"></span></p>
+    <p><strong>Смена:</strong> <span id="repShift"></span></p>
+    <p><strong>Присутствовали:</strong></p>
+    <div id="repEmployees"></div>
+    <p style="margin-top:2rem;">____________________  (подпись)</p>
+  </div>
+
+  <script>
+    // ==========================
+    // 1. КОНФИГУРАЦИЯ
+    // ==========================
+    const EMPLOYEES = [
+      "Иванов А.А.", "Петров Б.Б.", "Сидоров В.В.", "Кузнецов Г.Г.", "Смирнова Д.Д.",
+      "Васильев Е.Е.", "Фёдоров Ж.Ж.", "Кириллова З.З.", "Алексеев И.И.", "Николаева К.К.",
+      "Орлов Л.Л.", "Андреев М.М.", "Тарасова Н.Н.", "Белов О.О.", "Морозов П.П."
+    ];
+    const STORAGE_KEY = 'attendanceData';
+    const CYCLE_START_KEY = 'cycleStartDate';
+    const CYCLE_DAYS = 6;         // 2 day + 2 night + 2 off
+
+    // ==========================
+    // 2. ДАННЫЕ
+    // ==========================
+    let records = [];   // { date: 'YYYY-MM-DD', shift: 'day'|'night', present: [индексы 0..14] }
+
+    // ==========================
+    // 3. ЗАГРУЗКА И СОХРАНЕНИЕ
+    // ==========================
+    function loadRecords() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      records = raw ? JSON.parse(raw) : [];
+    }
+    function saveRecords() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+    function getCycleStart() {
+      return localStorage.getItem(CYCLE_START_KEY) || '2026-01-01'; // заглушка
+    }
+    function setCycleStart(dateStr) {
+      localStorage.setItem(CYCLE_START_KEY, dateStr);
+    }
+
+    // ==========================
+    // 4. РАСЧЁТ СМЕНЫ ПО ДАТЕ
+    // ==========================
+    function calcShiftType(dateStr) {
+      const start = new Date(getCycleStart());
+      const target = new Date(dateStr);
+      if (isNaN(start) || isNaN(target)) return 'day';
+      const diffDays = Math.floor((target - start) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) return 'day';
+      const cyclePos = diffDays % CYCLE_DAYS;
+      if (cyclePos < 2) return 'day';      // дни 0-1
+      if (cyclePos < 4) return 'night';    // дни 2-3
+      return 'off';                         // дни 4-5 (выходной)
+    }
+
+    // ==========================
+    // 5. ЭЛЕМЕНТЫ ИНТЕРФЕЙСА
+    // ==========================
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const dateInput = document.getElementById('attendanceDate');
+    const shiftSelect = document.getElementById('shiftSelect');
+    const autoShiftHint = document.getElementById('autoShiftHint');
+    const checkboxContainer = document.getElementById('employeeCheckboxes');
+    const saveAttendanceBtn = document.getElementById('saveAttendanceBtn');
+    const clearAttendanceBtn = document.getElementById('clearAttendanceBtn');
+    const attendanceMsg = document.getElementById('attendanceMsg');
+    const historyList = document.getElementById('historyList');
+    const historyFilterSelect = document.getElementById('historyFilterEmployee');
+    const printLastReportBtn = document.getElementById('printLastReportBtn');
+    const exportJsonBtn = document.getElementById('exportJsonBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const importFile = document.getElementById('importFile');
+    const importBtn = document.getElementById('importBtn');
+    const importMsg = document.getElementById('importMsg');
+    const resetDataBtn = document.getElementById('resetDataBtn');
+    const cycleStartInput = document.getElementById('cycleStartDate');
+    const saveCycleStartBtn = document.getElementById('saveCycleStartBtn');
+    const repDate = document.getElementById('repDate');
+    const repShift = document.getElementById('repShift');
+    const repEmployees = document.getElementById('repEmployees');
+
+    // ==========================
+    // 6. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+    // ==========================
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+        if (btn.dataset.tab === 'history') renderHistory();
+      });
+    });
+
+    // ==========================
+    // 7. ОТМЕТКА ЯВКИ
+    // ==========================
+    function renderCheckboxes() {
+      checkboxContainer.innerHTML = EMPLOYEES.map((name, idx) => `
+        <label>
+          <input type="checkbox" value="${idx}" /> ${name}
+        </label>
+      `).join('');
+    }
+
+    function updateAutoShift() {
+      const dateVal = dateInput.value;
+      if (!dateVal) return;
+      const type = calcShiftType(dateVal);
+      autoShiftHint.textContent = `По графику: ${type === 'day' ? '🌞 Дневная' : type === 'night' ? '🌜 Ночная' : '🚫 Выходной'}`;
+      // Автоматически устанавливаем смену, если это рабочий день
+      if (type === 'day' || type === 'night') {
+        shiftSelect.value = type;
+      } else {
+        // Выходной, но даём возможность выбрать вручную
+        shiftSelect.value = 'day';
+        autoShiftHint.textContent += ' (но можно отметить вручную)';
+      }
+    }
+
+    function loadAttendanceForm() {
+      const date = dateInput.value;
+      const shift = shiftSelect.value;
+      // Ищем существующую запись
+      const record = records.find(r => r.date === date && r.shift === shift);
+      const checkboxes = document.querySelectorAll('#employeeCheckboxes input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        cb.checked = record ? record.present.includes(parseInt(cb.value)) : false;
+      });
+    }
+
+    dateInput.addEventListener('change', () => {
+      updateAutoShift();
+      loadAttendanceForm();
+    });
+    shiftSelect.addEventListener('change', loadAttendanceForm);
+
+    saveAttendanceBtn.addEventListener('click', () => {
+      const date = dateInput.value;
+      const shift = shiftSelect.value;
+      if (!date) {
+        attendanceMsg.textContent = '❌ Выберите дату';
+        return;
+      }
+      const checked = [...document.querySelectorAll('#employeeCheckboxes input:checked')]
+        .map(cb => parseInt(cb.value));
+      
+      // Удаляем старую запись на эту дату+смену, если есть
+      records = records.filter(r => !(r.date === date && r.shift === shift));
+      records.push({ date, shift, present: checked });
+      saveRecords();
+      attendanceMsg.textContent = '✅ Явка сохранена';
+      renderHistory();
+    });
+
+    clearAttendanceBtn.addEventListener('click', () => {
+      document.querySelectorAll('#employeeCheckboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+      attendanceMsg.textContent = '';
+    });
+
+    // ==========================
+    // 8. ИСТОРИЯ И ФИЛЬТРАЦИЯ
+    // ==========================
+    function renderHistory() {
+      // Заполняем фильтр
+      historyFilterSelect.innerHTML = '<option value="">Все</option>' +
+        EMPLOYEES.map((name, idx) => `<option value="${idx}">${name}</option>`).join('');
+      
+      const filterEmpIdx = historyFilterSelect.value;
+      let filtered = [...records].reverse(); // свежие сверху
+      if (filterEmpIdx !== '') {
+        filtered = filtered.filter(r => r.present.includes(parseInt(filterEmpIdx)));
+      }
+
+      historyList.innerHTML = filtered.length === 0
+        ? '<p>Записей нет</p>'
+        : filtered.map(r => {
+            const names = r.present.map(i => EMPLOYEES[i]).join(', ') || '—';
+            const shiftEmoji = r.shift === 'day' ? '🌞' : '🌜';
+            return `<div class="history-item">
+              <span><strong>${r.date}</strong> ${shiftEmoji} ${r.shift === 'day' ? 'День' : 'Ночь'}: ${names}</span>
+              <span>
+                <button class="small-btn print-report-btn" data-date="${r.date}" data-shift="${r.shift}">🖨 Отчёт</button>
+                <button class="small-btn danger delete-record-btn" data-date="${r.date}" data-shift="${r.shift}">🗑</button>
+              </span>
+            </div>`;
+          }).join('');
+
+      // Вешаем обработчики на кнопки отчёта и удаления
+      document.querySelectorAll('.print-report-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const date = btn.dataset.date;
+          const shift = btn.dataset.shift;
+          printReport(date, shift);
+        });
+      });
+      document.querySelectorAll('.delete-record-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!confirm('Удалить эту запись?')) return;
+          const date = btn.dataset.date;
+          const shift = btn.dataset.shift;
+          records = records.filter(r => !(r.date === date && r.shift === shift));
+          saveRecords();
+          renderHistory();
+        });
+      });
+    }
+
+    historyFilterSelect.addEventListener('change', renderHistory);
+
+    // ==========================
+    // 9. ПЕЧАТЬ ОТЧЁТА
+    // ==========================
+    function printReport(date, shift) {
+      const record = records.find(r => r.date === date && r.shift === shift);
+      if (!record) return;
+      repDate.textContent = date;
+      repShift.textContent = shift === 'day' ? 'Дневная' : 'Ночная';
+      repEmployees.innerHTML = record.present.length
+        ? `<ul>${record.present.map(i => `<li>${EMPLOYEES[i]}</li>`).join('')}</ul>`
+        : '<p>Нет отметок</p>';
+      window.print();
+    }
+
+    printLastReportBtn.addEventListener('click', () => {
+      if (records.length === 0) {
+        alert('Нет записей');
+        return;
+      }
+      const last = records[records.length - 1];
+      printReport(last.date, last.shift);
+    });
+
+    // ==========================
+    // 10. ЭКСПОРТ
+    // ==========================
+    function exportJson() {
+      const blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
+      downloadBlob(blob, 'attendance.json');
+    }
+    function exportCsv() {
+      // Нормализованный CSV: каждая строка = один выход сотрудника
+      let csv = 'Дата;Смена;Сотрудник\n';
+      records.forEach(r => {
+        r.present.forEach(empIdx => {
+          csv += `${r.date};${r.shift === 'day' ? 'День' : 'Ночь'};${EMPLOYEES[empIdx]}\n`;
+        });
+        if (r.present.length === 0) {
+          csv += `${r.date};${r.shift === 'day' ? 'День' : 'Ночь'};—\n`;
+        }
+      });
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' }); // BOM для Excel
+      downloadBlob(blob, 'attendance.csv');
+    }
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    exportJsonBtn.addEventListener('click', exportJson);
+    exportCsvBtn.addEventListener('click', exportCsv);
+
+    // ==========================
+    // 11. ИМПОРТ
+    // ==========================
+    importBtn.addEventListener('click', () => {
+      const file = importFile.files[0];
+      if (!file) {
+        importMsg.textContent = '❌ Выберите файл';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target.result;
+          if (file.name.endsWith('.json')) {
+            const data = JSON.parse(text);
+            if (!Array.isArray(data)) throw new Error('Неверный формат JSON');
+            records = data;
+            saveRecords();
+            importMsg.textContent = `✅ Импортировано ${data.length} записей`;
+          } else if (file.name.endsWith('.csv')) {
+            const lines = text.split('\n').filter(l => l.trim());
+            if (lines.length < 2) throw new Error('Файл CSV пуст');
+            const newRecords = [];
+            // Определяем разделитель (запятая или точка с запятой)
+            const sep = lines[0].includes(';') ? ';' : ',';
+            for (let i = 1; i < lines.length; i++) {
+              const cols = lines[i].split(sep).map(s => s.trim());
+              if (cols.length < 3) continue;
+              const date = cols[0];
+              const shift = cols[1].startsWith('Д') ? 'day' : 'night';
+              const name = cols[2];
+              const empIdx = EMPLOYEES.indexOf(name);
+              if (empIdx === -1) continue; // пропускаем неизвестных
+              // Ищем запись с такой датой и сменой
+              let rec = newRecords.find(r => r.date === date && r.shift === shift);
+              if (!rec) {
+                rec = { date, shift, present: [] };
+                newRecords.push(rec);
+              }
+              if (!rec.present.includes(empIdx)) rec.present.push(empIdx);
+            }
+            records = newRecords;
+            saveRecords();
+            importMsg.textContent = `✅ Импортировано ${newRecords.length} смен из CSV`;
+          } else {
+            throw new Error('Поддерживаются только .json и .csv');
+          }
+          renderHistory();
+        } catch (err) {
+          importMsg.textContent = '❌ Ошибка: ' + err.message;
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // ==========================
+    // 12. СБРОС ДАННЫХ
+    // ==========================
+    resetDataBtn.addEventListener('click', () => {
+      if (confirm('Вы уверены? Все записи будут безвозвратно удалены.')) {
+        records = [];
+        saveRecords();
+        renderHistory();
+        alert('Данные удалены');
+      }
+    });
+
+    // ==========================
+    // 13. НАСТРОЙКА ЦИКЛА СМЕН
+    // ==========================
+    cycleStartInput.value = getCycleStart();
+    saveCycleStartBtn.addEventListener('click', () => {
+      const val = cycleStartInput.value;
+      if (!val) return;
+      setCycleStart(val);
+      updateAutoShift();
+      alert('Дата начала цикла сохранена');
+    });
+
+    // ==========================
+    // 14. ИНИЦИАЛИЗАЦИЯ
+    // ==========================
+    loadRecords();
+    renderCheckboxes();
+    dateInput.valueAsDate = new Date();
+    updateAutoShift();
+    loadAttendanceForm();
+    renderHistory();
+  </script>
+</body>
+</html>
