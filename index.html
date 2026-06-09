@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Учёт явки сотрудников — Объект ФС</title>
   <style>
     :root {
@@ -12,7 +12,6 @@
       --primary: #0d6efd;
       --danger: #dc3545;
       --success: #198754;
-      --warning: #ffc107;
       --info: #0dcaf0;
       --border: #dee2e6;
       --radius: 0.5rem;
@@ -26,28 +25,60 @@
       padding: 1rem;
       max-width: 950px;
       margin: 0 auto;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
     }
-    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tabs { 
+      display: flex; 
+      gap: 0.5rem; 
+      margin-bottom: 1.5rem; 
+      flex-wrap: wrap; 
+    }
     .tab-btn {
-      padding: 0.5rem 1rem;
-      border: 1px solid var(--border);
+      padding: 0.75rem 1.25rem;
+      border: 2px solid var(--border);
       background: var(--surface);
       cursor: pointer;
       border-radius: var(--radius);
       font-weight: 500;
+      font-size: 1rem;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(13,110,253,0.3);
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
     }
-    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .tab-btn:active {
+      transform: scale(0.97);
+    }
+    .tab-btn.active { 
+      background: var(--primary); 
+      color: #fff; 
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(13,110,253,0.3);
+    }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    h2 { margin-bottom: 1rem; }
-    h3 { margin: 1rem 0 0.5rem; }
-    .form-group { margin-bottom: 1rem; }
-    label { display: block; font-weight: 500; margin-bottom: 0.25rem; }
+    h2 { margin-bottom: 1rem; font-size: 1.5rem; }
+    h3 { margin: 1.25rem 0 0.75rem; font-size: 1.25rem; }
+    .form-group { margin-bottom: 1.25rem; }
+    label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
     input[type="date"], input[type="month"], select, button, input[type="file"] { 
-      font-size: 1rem; padding: 0.4rem 0.75rem; 
+      font-size: 1rem; 
+      padding: 0.6rem 0.75rem;
+      min-height: 48px;
     }
-    input[type="date"], input[type="month"], select { width: 100%; max-width: 300px; }
+    input[type="date"], input[type="month"], select { 
+      width: 100%; 
+      max-width: 100%;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+    }
     button {
       background: var(--primary);
       color: #fff;
@@ -55,47 +86,72 @@
       border-radius: var(--radius);
       cursor: pointer;
       font-weight: 500;
-      transition: opacity 0.2s;
+      transition: all 0.2s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(13,110,253,0.3);
+      min-height: 48px;
+      padding: 0.75rem 1.5rem;
     }
-    button:hover { opacity: 0.85; }
+    button:active {
+      transform: scale(0.97);
+    }
+    button:hover { opacity: 0.9; }
     button.danger { background: var(--danger); }
     button.success { background: var(--success); }
     button.info { background: var(--info); color: #000; }
     button.outline {
       background: transparent;
       color: var(--primary);
-      border: 1px solid var(--primary);
+      border: 2px solid var(--primary);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .employee-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 0.5rem;
+      gap: 0.75rem;
       margin: 1rem 0;
     }
     .employee-row {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.5rem;
+      padding: 0.75rem;
       background: var(--surface);
       border-radius: var(--radius);
       flex-wrap: wrap;
+      border: 1px solid var(--border);
     }
     .employee-row .emp-name {
       flex: 1;
-      min-width: 200px;
+      min-width: 150px;
       font-weight: 500;
+      font-size: 0.95rem;
     }
     .employee-row .emp-category {
       font-size: 0.8rem;
       color: #6c757d;
-      margin-left: 0.5rem;
+      margin-left: 0.25rem;
+      display: inline-block;
     }
     .employee-row select {
-      width: 140px;
-      padding: 0.25rem 0.5rem;
-      font-size: 0.9rem;
+      width: 150px;
+      padding: 0.5rem;
+      font-size: 0.95rem;
+      min-height: 44px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      background-size: 1.2em;
+      padding-right: 2rem;
     }
 
     .status-present { color: var(--success); font-weight: 500; }
@@ -106,14 +162,18 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.5rem 0;
+      padding: 0.75rem 0;
       border-bottom: 1px solid var(--border);
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
-    .history-item button { margin-left: 0.25rem; }
+    .history-item button { 
+      margin-left: 0.25rem;
+      min-height: 40px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+    }
 
-    /* Стили для печатного и копируемого отчёта */
     #reportPrintArea, #monthlyReportArea {
       display: none;
       padding: 2rem;
@@ -123,10 +183,22 @@
       max-width: 850px;
       margin: 0 auto;
     }
-    #reportPrintArea h2, #monthlyReportArea h2 { text-align: center; margin-bottom: 0.25rem; }
-    #reportPrintArea h4, #monthlyReportArea h4 { text-align: center; margin-bottom: 1rem; font-weight: normal; }
-    #reportPrintArea .report-meta, #monthlyReportArea .report-meta { margin-bottom: 1rem; }
-    #reportPrintArea .report-meta p, #monthlyReportArea .report-meta p { margin-bottom: 0.25rem; }
+    #reportPrintArea h2, #monthlyReportArea h2 { 
+      text-align: center; 
+      margin-bottom: 0.25rem; 
+      font-size: 1.25rem;
+    }
+    #reportPrintArea h4, #monthlyReportArea h4 { 
+      text-align: center; 
+      margin-bottom: 1rem; 
+      font-weight: normal; 
+    }
+    #reportPrintArea .report-meta, #monthlyReportArea .report-meta { 
+      margin-bottom: 1rem; 
+    }
+    #reportPrintArea .report-meta p, #monthlyReportArea .report-meta p { 
+      margin-bottom: 0.25rem; 
+    }
     #reportPrintArea table, #monthlyReportArea table {
       width: 100%;
       border-collapse: collapse;
@@ -140,12 +212,17 @@
       text-align: left;
     }
     #reportPrintArea th, #monthlyReportArea th { background: #eee; }
-    #reportPrintArea .summary, #monthlyReportArea .summary { margin-top: 1rem; font-weight: 500; }
+    #reportPrintArea .summary, #monthlyReportArea .summary { 
+      margin-top: 1rem; 
+      font-weight: 500; 
+    }
 
     @media print {
       body * { visibility: hidden; }
       #reportPrintArea, #reportPrintArea *,
-      #monthlyReportArea, #monthlyReportArea * { visibility: visible; }
+      #monthlyReportArea, #monthlyReportArea * { 
+        visibility: visible; 
+      }
       #reportPrintArea, #monthlyReportArea {
         position: absolute;
         left: 0;
@@ -154,33 +231,60 @@
         display: block !important;
         padding: 1rem;
       }
-      @page { margin: 1.5cm; size: landscape; }
+      @page { margin: 1.5cm; }
     }
 
-    .small-btn { font-size: 0.85rem; padding: 0.25rem 0.6rem; }
-    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
+    .btn-group { 
+      display: flex; 
+      gap: 0.75rem; 
+      flex-wrap: wrap; 
+      margin: 1.25rem 0; 
+    }
     .toast {
       position: fixed;
-      bottom: 1rem;
-      right: 1rem;
+      bottom: 1.25rem;
+      right: 1.25rem;
       background: #333;
       color: #fff;
-      padding: 0.75rem 1.25rem;
+      padding: 0.875rem 1.5rem;
       border-radius: var(--radius);
       font-weight: 500;
       z-index: 9999;
       opacity: 0;
       transition: opacity 0.3s;
       pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     .toast.show { opacity: 1; }
+
+    /* Улучшения для мобильных */
+    @media (max-width: 600px) {
+      body { padding: 0.75rem; }
+      .employee-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .employee-row select {
+        width: 100%;
+      }
+      .btn-group {
+        flex-direction: column;
+      }
+      .btn-group button {
+        width: 100%;
+      }
+      .history-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
   </style>
 </head>
 <body>
   <h1>👥 Учёт явки — Объект ФС</h1>
 
   <!-- Вкладки -->
-  <div class="tabs">
+  <div class="tabs" id="tabButtons">
     <button class="tab-btn active" data-tab="attendance">✅ Отметка явки</button>
     <button class="tab-btn" data-tab="history">📋 История</button>
     <button class="tab-btn" data-tab="tools">⚙️ Инструменты</button>
@@ -238,26 +342,26 @@
     </div>
     <div>
       <h3>Импорт</h3>
-      <input type="file" id="importFile" accept=".json,.csv" style="margin-bottom:0.5rem;" />
+      <input type="file" id="importFile" accept=".json,.csv" style="margin-bottom:0.75rem;" />
       <button id="importBtn" class="outline">📥 Загрузить данные</button>
-      <div id="importMsg" style="margin-top:0.5rem;"></div>
+      <div id="importMsg" style="margin-top:0.75rem;"></div>
     </div>
 
     <hr style="margin:2rem 0;" />
     <h2>📅 Месячный отчёт</h2>
-    <p style="margin-bottom:0.5rem;">Сформировать сводный отчёт за все смены выбранного месяца</p>
+    <p style="margin-bottom:0.75rem;">Сформировать сводный отчёт за все смены выбранного месяца</p>
     <div class="form-group">
       <label>Выберите месяц</label>
       <input type="month" id="monthlyReportMonth" />
     </div>
     <div class="btn-group">
-      <button id="generateMonthlyReportBtn" class="success">📊 Сформировать месячный отчёт</button>
+      <button id="generateMonthlyReportBtn" class="success">📊 Сформировать</button>
       <button id="printMonthlyReportBtn" class="outline" disabled>🖨 Печать</button>
       <button id="copyMonthlyReportBtn" class="info" disabled>📋 Копировать</button>
-      <button id="exportMonthlyCsvBtn" class="outline" disabled>💾 Экспорт CSV</button>
+      <button id="exportMonthlyCsvBtn" class="outline" disabled>💾 CSV</button>
     </div>
     <div id="monthlyReportPreview" style="margin-top:1rem; padding:1rem; background:var(--surface); border-radius:var(--radius); display:none;">
-      <p style="font-weight:500;">Отчёт готов ✅. Используйте кнопки выше для печати, копирования или экспорта.</p>
+      <p style="font-weight:500;">✅ Отчёт готов. Используйте кнопки выше.</p>
     </div>
 
     <hr style="margin:2rem 0;" />
@@ -265,14 +369,13 @@
     <button id="resetDataBtn" class="danger">⚠️ Удалить все записи</button>
 
     <hr style="margin:2rem 0;" />
-    <h3>Настройка цикла смен (опционально)</h3>
-    <p style="margin-bottom:0.5rem;">График: 2 дня днём, 2 ночью, 2 выходных. Укажите дату первой дневной смены.</p>
+    <h3>Настройка цикла смен</h3>
+    <p style="margin-bottom:0.75rem;">График: 2 дня днём, 2 ночью, 2 выходных. Укажите дату первой дневной смены.</p>
     <input type="date" id="cycleStartDate" />
-    <button id="saveCycleStartBtn" class="small-btn" style="margin-left:0.5rem;">Сохранить</button>
+    <button id="saveCycleStartBtn" style="margin-left:0.75rem; margin-top:0.75rem;">Сохранить</button>
   </div>
 
-  <!-- ==================== СКРЫТЫЕ ОБЛАСТИ ОТЧЁТОВ ==================== -->
-  <!-- Отчёт за одну смену (печать) -->
+  <!-- Скрытые области отчётов -->
   <div id="reportPrintArea">
     <h2>ОТЧЁТ О ЯВКЕ ПЕРСОНАЛА</h2>
     <h4>Объект ФС</h4>
@@ -283,9 +386,7 @@
       <p><strong>По штату:</strong> <span id="repTotalStaff"></span> чел. | <strong>Вышли:</strong> <span id="repPresentCount"></span> чел.</p>
     </div>
     <table>
-      <thead>
-        <tr><th>№</th><th>Категория</th><th>ФИО</th><th>Статус</th></tr>
-      </thead>
+      <thead><tr><th>№</th><th>Категория</th><th>ФИО</th><th>Статус</th></tr></thead>
       <tbody id="repTableBody"></tbody>
     </table>
     <div class="summary">
@@ -295,7 +396,6 @@
     </div>
   </div>
 
-  <!-- Месячный отчёт (печать) -->
   <div id="monthlyReportArea">
     <h2>СВОДНЫЙ ОТЧЁТ О ЯВКЕ ПЕРСОНАЛА ЗА МЕСЯЦ</h2>
     <h4>Объект ФС — Модуль 52.2</h4>
@@ -316,7 +416,7 @@
     </div>
   </div>
 
-  <!-- Toast-уведомление -->
+  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
   <script>
@@ -345,23 +445,37 @@
     const CYCLE_DAYS = 6;
 
     let records = [];
+    let currentMonthlyReportData = null;
 
     // ==========================
     // 2. УТИЛИТЫ
     // ==========================
     function loadRecords() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      records = raw ? JSON.parse(raw) : [];
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        records = raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        records = [];
+        console.error('Ошибка загрузки данных:', e);
+      }
     }
+    
     function saveRecords() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      } catch (e) {
+        alert('Ошибка сохранения! Возможно, память браузера переполнена.');
+      }
     }
+    
     function getCycleStart() {
       return localStorage.getItem(CYCLE_START_KEY) || '2026-01-01';
     }
+    
     function setCycleStart(dateStr) {
       localStorage.setItem(CYCLE_START_KEY, dateStr);
     }
+    
     function calcShiftType(dateStr) {
       const start = new Date(getCycleStart());
       const target = new Date(dateStr);
@@ -373,18 +487,50 @@
       if (cyclePos < 4) return 'night';
       return 'off';
     }
+    
     function showToast(msg) {
       const toast = document.getElementById('toast');
       toast.textContent = msg;
       toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2500);
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // Надёжное копирование в буфер обмена
+    async function copyToClipboard(text) {
+      try {
+        // Пробуем современный API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch (e) {
+        console.log('Clipboard API не сработал, используем fallback');
+      }
+      
+      // Fallback метод через textarea
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return success;
+      } catch (e) {
+        console.error('Fallback копирования не сработал:', e);
+        return false;
+      }
     }
 
     // ==========================
     // 3. DOM-ЭЛЕМЕНТЫ
     // ==========================
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
     const dateInput = document.getElementById('attendanceDate');
     const shiftSelect = document.getElementById('shiftSelect');
     const autoShiftHint = document.getElementById('autoShiftHint');
@@ -396,24 +542,13 @@
     const attendanceMsg = document.getElementById('attendanceMsg');
     const historyList = document.getElementById('historyList');
     const historyFilterSelect = document.getElementById('historyFilterEmployee');
-    const exportJsonBtn = document.getElementById('exportJsonBtn');
-    const exportCsvBtn = document.getElementById('exportCsvBtn');
     const importFile = document.getElementById('importFile');
-    const importBtn = document.getElementById('importBtn');
     const importMsg = document.getElementById('importMsg');
-    const resetDataBtn = document.getElementById('resetDataBtn');
-    const cycleStartInput = document.getElementById('cycleStartDate');
-    const saveCycleStartBtn = document.getElementById('saveCycleStartBtn');
-
-    // Месячный отчёт
     const monthlyReportMonth = document.getElementById('monthlyReportMonth');
-    const generateMonthlyReportBtn = document.getElementById('generateMonthlyReportBtn');
+    const monthlyReportPreview = document.getElementById('monthlyReportPreview');
     const printMonthlyReportBtn = document.getElementById('printMonthlyReportBtn');
     const copyMonthlyReportBtn = document.getElementById('copyMonthlyReportBtn');
     const exportMonthlyCsvBtn = document.getElementById('exportMonthlyCsvBtn');
-    const monthlyReportPreview = document.getElementById('monthlyReportPreview');
-
-    // Элементы отчёта за смену
     const repDateTime = document.getElementById('repDateTime');
     const repShiftInfo = document.getElementById('repShiftInfo');
     const repTotalStaff = document.getElementById('repTotalStaff');
@@ -421,27 +556,42 @@
     const repTableBody = document.getElementById('repTableBody');
     const repSummaryPresent = document.getElementById('repSummaryPresent');
     const repSummaryAbsent = document.getElementById('repSummaryAbsent');
-
-    // Элементы месячного отчёта
     const monRepDateTime = document.getElementById('monRepDateTime');
     const monRepPeriod = document.getElementById('monRepPeriod');
     const monRepTotalShifts = document.getElementById('monRepTotalShifts');
     const monRepStaff = document.getElementById('monRepStaff');
-    const monRepTable = document.getElementById('monRepTable');
-
-    // Текущий сформированный месячный отчёт (храним в переменной для копирования/печати)
-    let currentMonthlyReportData = null;
 
     // ==========================
-    // 4. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+    // 4. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК (исправлено для Android)
     // ==========================
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    function switchTab(tabName) {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      
+      const targetButton = document.querySelector(`[data-tab="${tabName}"]`);
+      const targetContent = document.getElementById(`tab-${tabName}`);
+      
+      if (targetButton) targetButton.classList.add('active');
+      if (targetContent) targetContent.classList.add('active');
+      
+      if (tabName === 'history') renderHistory();
+    }
+
+    // Используем и click, и touch события для максимальной совместимости
     tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabButtons.forEach(b => b.classList.remove('active'));
-        tabContents.forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
-        if (btn.dataset.tab === 'history') renderHistory();
+      const handler = function(e) {
+        e.preventDefault();
+        const tabName = this.getAttribute('data-tab');
+        if (tabName) switchTab(tabName);
+      };
+      
+      btn.addEventListener('click', handler);
+      btn.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        handler.call(this, e);
       });
     });
 
@@ -467,7 +617,6 @@
       if (type === 'day' || type === 'night') {
         shiftSelect.value = type;
       } else {
-        shiftSelect.value = 'day';
         autoShiftHint.textContent += ' (можно отметить вручную)';
       }
     }
@@ -478,27 +627,35 @@
       const record = records.find(r => r.date === date && r.shift === shift);
       const selects = document.querySelectorAll('.emp-status');
       selects.forEach(sel => {
-        const idx = parseInt(sel.dataset.index);
-        sel.value = record ? record.statuses[idx] : 'Пришёл';
+        const idx = parseInt(sel.getAttribute('data-index'));
+        sel.value = record && record.statuses ? record.statuses[idx] : 'Пришёл';
       });
     }
 
     function getCurrentFormStatuses() {
-      return [...document.querySelectorAll('.emp-status')].map(sel => sel.value);
+      const selects = document.querySelectorAll('.emp-status');
+      return [...selects].map(sel => sel.value);
     }
 
-    dateInput.addEventListener('change', () => { updateAutoShift(); loadAttendanceForm(); });
+    dateInput.addEventListener('change', () => { 
+      updateAutoShift(); 
+      loadAttendanceForm(); 
+    });
     shiftSelect.addEventListener('change', loadAttendanceForm);
 
     saveAttendanceBtn.addEventListener('click', () => {
       const date = dateInput.value;
       const shift = shiftSelect.value;
-      if (!date) { attendanceMsg.textContent = '❌ Выберите дату'; return; }
+      if (!date) { 
+        attendanceMsg.textContent = '❌ Выберите дату'; 
+        return; 
+      }
       const statuses = getCurrentFormStatuses();
       records = records.filter(r => !(r.date === date && r.shift === shift));
       records.push({ date, shift, statuses });
       saveRecords();
       attendanceMsg.textContent = '✅ Явка сохранена';
+      setTimeout(() => { attendanceMsg.textContent = ''; }, 3000);
       renderHistory();
     });
 
@@ -519,21 +676,20 @@
       const presentCount = statuses.filter(s => s === 'Пришёл').length;
       const absentCount = totalStaff - presentCount;
 
-      let text = '';
-      text += 'ОТЧЁТ О ЯВКЕ ПЕРСОНАЛА\n';
+      let text = 'ОТЧЁТ О ЯВКЕ ПЕРСОНАЛА\n';
       text += 'Объект ФС\n\n';
       text += `Дата и время отчёта: ${dateTimeStr}\n`;
       text += `Смена: ${shiftTimeStr} | Дата смены: ${date}\n`;
       text += 'Модуль 52.2\n';
       text += `По штату: ${totalStaff} чел. | Вышли: ${presentCount} чел.\n\n`;
-
       text += '№  | Категория     | ФИО                  | Статус\n';
       text += '---|---------------|----------------------|------------\n';
+      
       EMPLOYEES.forEach((emp, idx) => {
         const status = statuses[idx] || 'Не указан';
         text += `${String(idx + 1).padEnd(2)} | ${emp.category.padEnd(13)} | ${emp.name.padEnd(20)} | ${status}\n`;
       });
-
+      
       text += `\nВсего присутствует: ${presentCount} чел.\n`;
       text += `Отсутствует: ${absentCount} чел.\n`;
       text += '\n____________________  (подпись ответственного)\n';
@@ -570,23 +726,16 @@
 
     function printShiftReport(date, shift, statuses) {
       fillPrintArea(date, shift, statuses);
-      window.print();
+      setTimeout(() => window.print(), 100);
     }
 
     async function copyShiftReport(date, shift, statuses) {
       const text = buildShiftReportText(date, shift, statuses);
-      try {
-        await navigator.clipboard.writeText(text);
+      const success = await copyToClipboard(text);
+      if (success) {
         showToast('✅ Отчёт скопирован в буфер обмена');
-      } catch (err) {
-        // fallback
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        showToast('✅ Отчёт скопирован в буфер обмена');
+      } else {
+        showToast('❌ Не удалось скопировать. Попробуйте выделить и скопировать вручную.');
       }
     }
 
@@ -631,85 +780,304 @@
                 | Присутствовало: ${presentCount}/${EMPLOYEES.length}
               </span>
               <span>
-                <button class="small-btn print-report-btn" data-date="${r.date}" data-shift="${r.shift}">🖨</button>
-                <button class="small-btn info copy-report-btn" data-date="${r.date}" data-shift="${r.shift}">📋</button>
-                <button class="small-btn danger delete-record-btn" data-date="${r.date}" data-shift="${r.shift}">🗑</button>
+                <button class="print-report-btn" data-date="${r.date}" data-shift="${r.shift}">🖨</button>
+                <button class="info copy-report-btn" data-date="${r.date}" data-shift="${r.shift}">📋</button>
+                <button class="danger delete-record-btn" data-date="${r.date}" data-shift="${r.shift}">🗑</button>
               </span>
             </div>`;
           }).join('');
 
+      // Назначаем обработчики с поддержкой touch
       document.querySelectorAll('.print-report-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        const handler = () => {
           const rec = records.find(r => r.date === btn.dataset.date && r.shift === btn.dataset.shift);
           if (rec) printShiftReport(rec.date, rec.shift, rec.statuses);
-        });
+        };
+        btn.addEventListener('click', handler);
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); handler(); });
       });
+      
       document.querySelectorAll('.copy-report-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        const handler = () => {
           const rec = records.find(r => r.date === btn.dataset.date && r.shift === btn.dataset.shift);
           if (rec) copyShiftReport(rec.date, rec.shift, rec.statuses);
-        });
+        };
+        btn.addEventListener('click', handler);
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); handler(); });
       });
+      
       document.querySelectorAll('.delete-record-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        const handler = () => {
           if (!confirm('Удалить эту запись?')) return;
           records = records.filter(r => !(r.date === btn.dataset.date && r.shift === btn.dataset.shift));
           saveRecords();
           renderHistory();
-        });
+        };
+        btn.addEventListener('click', handler);
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); handler(); });
       });
     }
 
     historyFilterSelect.addEventListener('change', renderHistory);
 
     // ==========================
-    // 8. МЕСЯЧНЫЙ ОТЧЁТ
+    // 8. ЭКСПОРТ / ИМПОРТ
     // ==========================
-    function buildMonthlyReportData(year, month) {
-      // Фильтруем записи за указанный месяц
+    document.getElementById('exportJsonBtn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'attendance_FS.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+    
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      let csv = 'Дата;Смена;';
+      EMPLOYEES.forEach(e => csv += `${e.name} (${e.category});`);
+      csv += '\n';
+      records.forEach(r => {
+        csv += `${r.date};${r.shift === 'day' ? 'День' : 'Ночь'};`;
+        r.statuses.forEach(s => csv += `${s};`);
+        csv += '\n';
+      });
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'attendance_FS.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+    
+    document.getElementById('importBtn').addEventListener('click', () => {
+      const file = importFile.files[0];
+      if (!file) { importMsg.textContent = '❌ Выберите файл'; return; }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target.result;
+          if (file.name.endsWith('.json')) {
+            const data = JSON.parse(text);
+            if (!Array.isArray(data)) throw new Error('Неверный формат JSON');
+            records = data;
+            saveRecords();
+            importMsg.textContent = `✅ Импортировано ${data.length} записей`;
+          } else if (file.name.endsWith('.csv')) {
+            const lines = text.split('\n').filter(l => l.trim());
+            if (lines.length < 2) throw new Error('Файл CSV пуст');
+            const sep = lines[0].includes(';') ? ';' : ',';
+            const newRecords = [];
+            for (let i = 1; i < lines.length; i++) {
+              const cols = lines[i].split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
+              if (cols.length < 3) continue;
+              const date = cols[0];
+              const shift = cols[1].startsWith('Д') ? 'day' : 'night';
+              const statuses = cols.slice(2, 2 + EMPLOYEES.length);
+              while (statuses.length < EMPLOYEES.length) statuses.push('Не указан');
+              newRecords.push({ date, shift, statuses: statuses.slice(0, EMPLOYEES.length) });
+            }
+            records = newRecords;
+            saveRecords();
+            importMsg.textContent = `✅ Импортировано ${newRecords.length} смен из CSV`;
+          } else {
+            throw new Error('Поддерживаются только .json и .csv');
+          }
+          renderHistory();
+        } catch (err) {
+          importMsg.textContent = '❌ Ошибка: ' + err.message;
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // ==========================
+    // 9. СБРОС ДАННЫХ
+    // ==========================
+    document.getElementById('resetDataBtn').addEventListener('click', () => {
+      if (confirm('Вы уверены? Все записи будут безвозвратно удалены.')) {
+        records = [];
+        saveRecords();
+        renderHistory();
+        alert('Данные удалены');
+      }
+    });
+
+    // ==========================
+    // 10. НАСТРОЙКА ЦИКЛА
+    // ==========================
+    document.getElementById('cycleStartDate').value = getCycleStart();
+    document.getElementById('saveCycleStartBtn').addEventListener('click', () => {
+      const val = document.getElementById('cycleStartDate').value;
+      if (!val) return;
+      setCycleStart(val);
+      updateAutoShift();
+      alert('Дата начала цикла сохранена');
+    });
+
+    // ==========================
+    // 11. МЕСЯЧНЫЙ ОТЧЁТ
+    // ==========================
+    document.getElementById('generateMonthlyReportBtn').addEventListener('click', () => {
+      const monthVal = monthlyReportMonth.value;
+      if (!monthVal) { alert('Выберите месяц'); return; }
+      
+      const [year, month] = monthVal.split('-').map(Number);
       const prefix = `${year}-${String(month).padStart(2, '0')}`;
       const monthRecords = records
         .filter(r => r.date.startsWith(prefix))
         .sort((a, b) => a.date.localeCompare(b.date) || a.shift.localeCompare(b.shift));
 
-      if (monthRecords.length === 0) return null;
+      if (monthRecords.length === 0) {
+        alert('Нет записей за выбранный месяц');
+        return;
+      }
 
-      // Для каждого сотрудника считаем статистику по статусам
       const stats = EMPLOYEES.map((emp, empIdx) => {
         const countStatus = {};
         STATUSES.forEach(s => countStatus[s] = 0);
         countStatus['Всего смен'] = monthRecords.length;
-
         monthRecords.forEach(r => {
           const st = r.statuses[empIdx] || 'Не указан';
-          if (countStatus[st] !== undefined) countStatus[st]++;
-          else countStatus[st] = 1;
+          countStatus[st] = (countStatus[st] || 0) + 1;
         });
         return { emp, stats: countStatus };
       });
 
-      return { year, month, monthRecords, stats };
-    }
-
-    function fillMonthlyPrintArea(data) {
-      const { year, month, monthRecords, stats } = data;
+      currentMonthlyReportData = { year, month, monthRecords, stats };
+      
+      // Заполняем скрытую область для печати
       const now = new Date();
       const dateTimeStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
         ' ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
       const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
                           'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-      const periodStr = `${monthNames[month - 1]} ${year}`;
-
+      
       monRepDateTime.textContent = dateTimeStr;
-      monRepPeriod.textContent = periodStr;
+      monRepPeriod.textContent = `${monthNames[month - 1]} ${year}`;
       monRepTotalShifts.textContent = monthRecords.length;
       monRepStaff.textContent = EMPLOYEES.length;
 
-      // Заголовок таблицы: даты смен
-      let headerHTML = '<tr><th>№</th><th>Категория</th><th>ФИО</th>';
-      monthRecords.forEach(r => {
-        const shortDate = r.date.slice(5); // MM-DD
-        const shiftLabel = r.shift === 'day' ? 'Д' : 'Н';
-        headerHTML += `<th>${shortDate} ${shiftLabel}</th>`;
+      // Заголовок таблицы
+      const thead = document.querySelector('#monRepTable thead');
+      const tbody = document.querySelector('#monRepTable tbody');
+      
+      thead.innerHTML = '<tr><th>№</th><th>Категория</th><th>ФИО</th>' +
+        monthRecords.map(r => {
+          const shortDate = r.date.slice(5);
+          return `<th>${shortDate}<br>${r.shift === 'day' ? 'День' : 'Ночь'}</th>`;
+        }).join('') +
+        '<th>Пришёл</th><th>Не пришёл</th><th>Уволился</th><th>Больничный</th><th>Отпуск</th><th>Отгул</th></tr>';
+
+      tbody.innerHTML = stats.map((s, idx) => {
+        let row = `<tr><td>${idx + 1}</td><td>${s.emp.category}</td><td>${s.emp.name}</td>`;
+        monthRecords.forEach(r => {
+          const st = r.statuses[idx] || 'Не указан';
+          const short = st === 'Пришёл' ? '✓' : st === 'Не пришёл' ? '✗' : st.charAt(0);
+          row += `<td style="text-align:center;">${short}</td>`;
+        });
+        row += `<td>${s.stats['Пришёл'] || 0}</td>`;
+        row += `<td>${s.stats['Не пришёл'] || 0}</td>`;
+        row += `<td>${s.stats['Уволился'] || 0}</td>`;
+        row += `<td>${s.stats['Больничный'] || 0}</td>`;
+        row += `<td>${s.stats['Отпуск'] || 0}</td>`;
+        row += `<td>${s.stats['Отгул'] || 0}</td>`;
+        row += '</tr>';
+        return row;
+      }).join('');
+
+      // Активируем кнопки
+      printMonthlyReportBtn.disabled = false;
+      copyMonthlyReportBtn.disabled = false;
+      exportMonthlyCsvBtn.disabled = false;
+      monthlyReportPreview.style.display = 'block';
+    });
+
+    printMonthlyReportBtn.addEventListener('click', () => {
+      if (!currentMonthlyReportData) return;
+      setTimeout(() => window.print(), 100);
+    });
+
+    copyMonthlyReportBtn.addEventListener('click', async () => {
+      if (!currentMonthlyReportData) return;
+      const { year, month, monthRecords, stats } = currentMonthlyReportData;
+      
+      const now = new Date();
+      const dateTimeStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+        ' ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                          'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+      
+      let text = 'СВОДНЫЙ ОТЧЁТ О ЯВКЕ ПЕРСОНАЛА ЗА МЕСЯЦ\n';
+      text += 'Объект ФС — Модуль 52.2\n\n';
+      text += `Дата и время формирования: ${dateTimeStr}\n`;
+      text += `Период: ${monthNames[month - 1]} ${year}\n`;
+      text += `Всего смен: ${monthRecords.length} | По штату: ${EMPLOYEES.length} чел.\n\n`;
+      
+      text += '№ | Категория | ФИО |';
+      monthRecords.forEach(r => text += ` ${r.date.slice(5)} ${r.shift === 'day' ? 'Д' : 'Н'} |`);
+      text += ' Пришёл | Не пришёл | Уволился | Больничный | Отпуск | Отгул\n';
+      
+      stats.forEach((s, idx) => {
+        text += `${idx + 1} | ${s.emp.category} | ${s.emp.name} |`;
+        monthRecords.forEach(r => {
+          const st = r.statuses[idx] || 'Не указан';
+          text += ` ${st === 'Пришёл' ? '✓' : st === 'Не пришёл' ? '✗' : st.charAt(0)} |`;
+        });
+        text += ` ${s.stats['Пришёл'] || 0} | ${s.stats['Не пришёл'] || 0} | ${s.stats['Уволился'] || 0} | ${s.stats['Больничный'] || 0} | ${s.stats['Отпуск'] || 0} | ${s.stats['Отгул'] || 0}\n`;
       });
-      headerHTML += '<th>Пришёл</th><th>Не пришёл</th><th>Уволился</th><th>Больничный
+      
+      text += '\n____________________  (подпись ответственного)\n';
+      
+      const success = await copyToClipboard(text);
+      if (success) {
+        showToast('✅ Месячный отчёт скопирован в буфер обмена');
+      } else {
+        showToast('❌ Не удалось скопировать. Проверьте разрешения браузера.');
+      }
+    });
+
+    exportMonthlyCsvBtn.addEventListener('click', () => {
+      if (!currentMonthlyReportData) return;
+      const { monthRecords, stats } = currentMonthlyReportData;
+      
+      let csv = '№;Категория;ФИО;';
+      monthRecords.forEach(r => csv += `${r.date} ${r.shift === 'day' ? 'День' : 'Ночь'};`);
+      csv += 'Пришёл;Не пришёл;Уволился;Больничный;Отпуск;Отгул\n';
+      
+      stats.forEach((s, idx) => {
+        csv += `${idx + 1};${s.emp.category};${s.emp.name};`;
+        monthRecords.forEach(r => {
+          const st = r.statuses[idx] || 'Не указан';
+          csv += `${st};`;
+        });
+        csv += `${s.stats['Пришёл'] || 0};${s.stats['Не пришёл'] || 0};${s.stats['Уволился'] || 0};${s.stats['Больничный'] || 0};${s.stats['Отпуск'] || 0};${s.stats['Отгул'] || 0}\n`;
+      });
+      
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `monthly_report_${currentMonthlyReportData.year}_${String(currentMonthlyReportData.month).padStart(2, '0')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('✅ CSV экспортирован');
+    });
+
+    // ==========================
+    // 12. ИНИЦИАЛИЗАЦИЯ
+    // ==========================
+    loadRecords();
+    renderEmployeeStatusGrid();
+    
+    const today = new Date();
+    dateInput.valueAsDate = today;
+    monthlyReportMonth.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    
+    updateAutoShift();
+    loadAttendanceForm();
+    renderHistory();
+  </script>
+</body>
+</html>
