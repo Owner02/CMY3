@@ -12,6 +12,7 @@
       --primary: #0d6efd;
       --danger: #dc3545;
       --success: #198754;
+      --warning: #ffc107;
       --border: #dee2e6;
       --radius: 0.5rem;
     }
@@ -39,9 +40,10 @@
     .tab-content.active { display: block; }
 
     h2 { margin-bottom: 1rem; }
+    h3 { margin: 1rem 0 0.5rem; }
     .form-group { margin-bottom: 1rem; }
     label { display: block; font-weight: 500; margin-bottom: 0.25rem; }
-    input[type="date"], select, button { font-size: 1rem; padding: 0.4rem 0.75rem; }
+    input[type="date"], select, button, input[type="file"] { font-size: 1rem; padding: 0.4rem 0.75rem; }
     input[type="date"], select { width: 100%; max-width: 300px; }
     button {
       background: var(--primary);
@@ -61,20 +63,40 @@
       border: 1px solid var(--primary);
     }
 
-    .checkbox-list {
+    .employee-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 0.5rem;
       margin: 1rem 0;
     }
-    .checkbox-list label {
+    .employee-row {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-weight: normal;
-      padding: 0.3rem;
-      border-bottom: 1px solid #eee;
+      gap: 0.75rem;
+      padding: 0.5rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+      flex-wrap: wrap;
     }
+    .employee-row .emp-name {
+      flex: 1;
+      min-width: 200px;
+      font-weight: 500;
+    }
+    .employee-row .emp-category {
+      font-size: 0.8rem;
+      color: #6c757d;
+      margin-left: 0.5rem;
+    }
+    .employee-row select {
+      width: 130px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .status-present { color: var(--success); font-weight: 500; }
+    .status-absent { color: var(--danger); font-weight: 500; }
+    .status-other { color: #6c757d; font-weight: 500; }
 
     .history-item {
       display: flex;
@@ -83,27 +105,36 @@
       padding: 0.5rem 0;
       border-bottom: 1px solid var(--border);
       flex-wrap: wrap;
+      gap: 0.5rem;
     }
-    .history-item button { margin-left: 0.5rem; }
+    .history-item button { margin-left: 0.25rem; }
 
     /* Стили для печатного отчёта */
     #reportPrintArea {
       display: none;
-      padding: 20px;
+      padding: 2rem;
       background: white;
-      font-family: 'Times New Roman', serif;
-      font-size: 14pt;
-      line-height: 1.5;
-      max-width: 210mm;
+      font-size: 0.95rem;
+      font-family: 'Times New Roman', Times, serif;
+      max-width: 800px;
       margin: 0 auto;
     }
-    #reportPrintArea h2 { text-align: center; font-size: 16pt; margin-bottom: 5px; }
-    #reportPrintArea h3 { text-align: center; font-size: 14pt; font-weight: normal; margin: 5px 0; }
-    #reportPrintArea .report-header { text-align: center; margin-bottom: 15px; }
-    #reportPrintArea .report-meta { margin: 10px 0; }
-    #reportPrintArea .report-list { margin: 10px 0 20px 0; }
-    #reportPrintArea .report-list div { padding: 2px 0; }
-    #reportPrintArea .signature { margin-top: 30px; }
+    #reportPrintArea h2 { text-align: center; margin-bottom: 0.25rem; }
+    #reportPrintArea h4 { text-align: center; margin-bottom: 1rem; font-weight: normal; }
+    #reportPrintArea .report-meta { margin-bottom: 1rem; }
+    #reportPrintArea .report-meta p { margin-bottom: 0.25rem; }
+    #reportPrintArea table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    #reportPrintArea th, #reportPrintArea td {
+      border: 1px solid #333;
+      padding: 0.4rem 0.5rem;
+      text-align: left;
+    }
+    #reportPrintArea th { background: #eee; }
+    #reportPrintArea .summary { margin-top: 1rem; font-weight: 500; }
 
     @media print {
       body * { visibility: hidden; }
@@ -114,17 +145,17 @@
         top: 0;
         width: 100%;
         display: block !important;
+        padding: 1rem;
       }
-      @page { margin: 15mm; }
+      @page { margin: 1.5cm; }
     }
 
-    .employee-filter { margin-bottom: 1rem; }
     .small-btn { font-size: 0.85rem; padding: 0.25rem 0.6rem; }
-    .fired-note { color: #888; font-style: italic; }
+    .danger-btn { background: var(--danger); }
   </style>
 </head>
 <body>
-  <h1>👥 Учёт явки — Объект ФС, Модуль 52.2</h1>
+  <h1>👥 Учёт явки — Объект ФС</h1>
 
   <!-- Вкладки -->
   <div class="tabs">
@@ -137,24 +168,28 @@
   <div class="tab-content active" id="tab-attendance">
     <h2>Отметить смену</h2>
     <div class="form-group">
-      <label>Дата</label>
+      <label>Дата смены</label>
       <input type="date" id="attendanceDate" />
     </div>
     <div class="form-group">
-      <label>Смена</label>
+      <label>Тип смены</label>
       <select id="shiftSelect">
-        <option value="day">🌞 Дневная (08:00–20:00)</option>
-        <option value="night">🌜 Ночная (20:00–08:00)</option>
+        <option value="day">🌞 Дневная (08:00 – 20:00)</option>
+        <option value="night">🌜 Ночная (20:00 – 08:00)</option>
       </select>
       <small id="autoShiftHint" style="display:block;margin-top:0.25rem;color:#6c757d;"></small>
     </div>
 
-    <h3>Сотрудники (отметьте присутствующих)</h3>
-    <div class="checkbox-list" id="employeeCheckboxes"></div>
+    <h3>Статус сотрудников</h3>
+    <p style="font-size:0.9rem; color:#6c757d; margin-bottom:0.5rem;">
+      Для каждого укажите статус явки
+    </p>
+    <div class="employee-grid" id="employeeStatusGrid"></div>
 
     <div style="margin-top:1rem; display:flex; gap:1rem; flex-wrap:wrap;">
-      <button id="saveAttendanceBtn">💾 Сохранить</button>
-      <button id="clearAttendanceBtn" class="outline">🗑 Очистить форму</button>
+      <button id="saveAttendanceBtn">💾 Сохранить явку</button>
+      <button id="clearAttendanceBtn" class="outline">🔄 Сбросить форму</button>
+      <button id="printCurrentReportBtn" class="outline">🖨 Печать отчёта</button>
     </div>
     <div id="attendanceMsg" style="margin-top:1rem; font-weight:500;"></div>
   </div>
@@ -169,7 +204,6 @@
       </select>
     </div>
     <div id="historyList"></div>
-    <button id="printLastReportBtn" class="outline small-btn" style="margin-top:1rem;">🖨 Печать последнего отчёта</button>
   </div>
 
   <!-- Вкладка "Инструменты" -->
@@ -190,60 +224,72 @@
     <button id="resetDataBtn" class="danger">⚠️ Удалить все записи</button>
 
     <hr style="margin:2rem 0;" />
-    <h3>Настройка цикла смен</h3>
+    <h3>Настройка цикла смен (опционально)</h3>
     <p style="margin-bottom:0.5rem;">График: 2 дня днём, 2 ночью, 2 выходных. Укажите дату, когда была <strong>первая дневная смена</strong>.</p>
     <input type="date" id="cycleStartDate" />
     <button id="saveCycleStartBtn" class="small-btn" style="margin-left:0.5rem;">Сохранить</button>
   </div>
 
-  <!-- Скрытая область для печати отчёта (новый формат) -->
+  <!-- Скрытая область для печати отчёта -->
   <div id="reportPrintArea">
-    <div class="report-header">
-      <h2>ОТЧЁТ О ЯВКЕ СОТРУДНИКОВ</h2>
-      <h3>Объект ФС</h3>
-      <h3>Модуль 52.2</h3>
-    </div>
+    <h2>ОТЧЁТ О ЯВКЕ ПЕРСОНАЛА</h2>
+    <h4>Объект ФС</h4>
     <div class="report-meta">
       <p><strong>Дата и время отчёта:</strong> <span id="repDateTime"></span></p>
       <p><strong>Смена:</strong> <span id="repShiftInfo"></span></p>
-      <p><strong>По штату:</strong> 14 человек</p>
-      <p><strong>Вышли:</strong> <span id="repPresentCount"></span> человек</p>
+      <p><strong>Модуль 52.2</strong></p>
+      <p><strong>По штату:</strong> <span id="repTotalStaff"></span> чел. | <strong>Вышли:</strong> <span id="repPresentCount"></span> чел.</p>
     </div>
-    <div class="report-list" id="repEmployeesList"></div>
-    <div class="signature">
-      <p>____________________  (подпись ответственного)</p>
+    <table>
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Должность / Категория</th>
+          <th>ФИО</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody id="repTableBody"></tbody>
+    </table>
+    <div class="summary">
+      <p>Всего присутствует: <span id="repSummaryPresent"></span> чел.</p>
+      <p>Отсутствует: <span id="repSummaryAbsent"></span> чел.</p>
+      <p style="margin-top:2rem;">____________________  (подпись ответственного)</p>
     </div>
   </div>
 
   <script>
     // ==========================
-    // 1. КОНФИГУРАЦИЯ — 14 сотрудников с должностями
+    // 1. КОНФИГУРАЦИЯ — НОВЫЕ СОТРУДНИКИ
     // ==========================
     const EMPLOYEES = [
-      { name: "Юмашев А.А.",         role: "ГС",        alwaysAbsent: false },
-      { name: "Просвирин А.А.",      role: "ВС",        alwaysAbsent: false },
-      { name: "Егоров Д.Д.",         role: "СП",        alwaysAbsent: false },
-      { name: "Сыченко А.В.",        role: "СП",        alwaysAbsent: false },
-      { name: "Оразбаев Ильназ К.",  role: "МС",        alwaysAbsent: false },
-      { name: "Набиев Д.М.",         role: "МС",        alwaysAbsent: false },
-      { name: "Посадов Д.А.",        role: "МС",        alwaysAbsent: false },
-      { name: "Савельев",            role: "СП",        alwaysAbsent: false },
-      { name: "Габдуллин А.Ф.",      role: "",          alwaysAbsent: false },
-      { name: "Енчуков А.",          role: "СП",        alwaysAbsent: false },
-      { name: "Павлов А.В.",         role: "МС",        alwaysAbsent: true, reason: "уволился" },
-      { name: "Васянович В.А.",      role: "МС",        alwaysAbsent: false },
-      { name: "Чхве Чхоль Су",       role: "практикант",alwaysAbsent: false },
-      { name: "Чхве Кван Хёк",       role: "практикант",alwaysAbsent: false },
+      { category: "ГС",         name: "Юмашев А.А." },
+      { category: "ВС",         name: "Просвирин А.А." },
+      { category: "СП",         name: "Егоров Д.Д." },
+      { category: "СП",         name: "Сыченко А.В." },
+      { category: "МС",         name: "Оразбаев Ильназ К." },
+      { category: "МС",         name: "Набиев Д.М." },
+      { category: "МС",         name: "Посадов Д.А." },
+      { category: "СП",         name: "Савельев" },
+      { category: "МС",         name: "Габдуллин А.Ф." },
+      { category: "СП",         name: "Енчуков А." },
+      { category: "МС",         name: "Павлов А.В." },
+      { category: "МС",         name: "Васянович В.А." },
+      { category: "Практикант", name: "Чхве Чхоль СУ" },
+      { category: "Практикант", name: "Чхве Кван Хёк" }
     ];
-
-    const STORAGE_KEY = 'attendanceData';
-    const CYCLE_START_KEY = 'cycleStartDate';
+    // Возможные статусы
+    const STATUSES = ["Пришёл", "Не пришёл", "Уволился", "Больничный", "Отпуск", "Отгул"];
+    const STORAGE_KEY = 'attendanceData_FS';
+    const CYCLE_START_KEY = 'cycleStartDate_FS';
     const CYCLE_DAYS = 6;
 
     // ==========================
     // 2. ДАННЫЕ
     // ==========================
-    let records = [];   // { date: 'YYYY-MM-DD', shift: 'day'|'night', present: [индексы] }
+    // Структура записи:
+    // { date: 'YYYY-MM-DD', shift: 'day'|'night', statuses: ['Пришёл', 'Не пришёл', ...] }
+    let records = [];
 
     // ==========================
     // 3. ЗАГРУЗКА И СОХРАНЕНИЕ
@@ -278,20 +324,20 @@
     }
 
     // ==========================
-    // 5. ЭЛЕМЕНТЫ ИНТЕРФЕЙСА
+    // 5. DOM-ЭЛЕМЕНТЫ
     // ==========================
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     const dateInput = document.getElementById('attendanceDate');
     const shiftSelect = document.getElementById('shiftSelect');
     const autoShiftHint = document.getElementById('autoShiftHint');
-    const checkboxContainer = document.getElementById('employeeCheckboxes');
+    const employeeStatusGrid = document.getElementById('employeeStatusGrid');
     const saveAttendanceBtn = document.getElementById('saveAttendanceBtn');
     const clearAttendanceBtn = document.getElementById('clearAttendanceBtn');
+    const printCurrentReportBtn = document.getElementById('printCurrentReportBtn');
     const attendanceMsg = document.getElementById('attendanceMsg');
     const historyList = document.getElementById('historyList');
     const historyFilterSelect = document.getElementById('historyFilterEmployee');
-    const printLastReportBtn = document.getElementById('printLastReportBtn');
     const exportJsonBtn = document.getElementById('exportJsonBtn');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
     const importFile = document.getElementById('importFile');
@@ -300,11 +346,15 @@
     const resetDataBtn = document.getElementById('resetDataBtn');
     const cycleStartInput = document.getElementById('cycleStartDate');
     const saveCycleStartBtn = document.getElementById('saveCycleStartBtn');
-    // Элементы печатного отчёта
+
+    // Элементы отчёта
     const repDateTime = document.getElementById('repDateTime');
     const repShiftInfo = document.getElementById('repShiftInfo');
+    const repTotalStaff = document.getElementById('repTotalStaff');
     const repPresentCount = document.getElementById('repPresentCount');
-    const repEmployeesList = document.getElementById('repEmployeesList');
+    const repTableBody = document.getElementById('repTableBody');
+    const repSummaryPresent = document.getElementById('repSummaryPresent');
+    const repSummaryAbsent = document.getElementById('repSummaryAbsent');
 
     // ==========================
     // 6. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
@@ -320,21 +370,17 @@
     });
 
     // ==========================
-    // 7. ОТМЕТКА ЯВКИ
+    // 7. ОТМЕТКА ЯВКИ — ГРИД С ВЫПАДАЮЩИМИ СПИСКАМИ
     // ==========================
-    function renderCheckboxes() {
-      checkboxContainer.innerHTML = EMPLOYEES.map((emp, idx) => {
-        if (emp.alwaysAbsent) {
-          return `<label style="color:#888;">
-            <input type="checkbox" value="${idx}" disabled />
-            ${emp.role ? emp.role + ' — ' : ''}${emp.name} — ${emp.reason || 'уволился'}
-          </label>`;
-        }
-        return `<label>
-          <input type="checkbox" value="${idx}" />
-          ${emp.role ? emp.role + ' — ' : ''}${emp.name}
-        </label>`;
-      }).join('');
+    function renderEmployeeStatusGrid() {
+      employeeStatusGrid.innerHTML = EMPLOYEES.map((emp, idx) => `
+        <div class="employee-row">
+          <span class="emp-name">${emp.name} <span class="emp-category">(${emp.category})</span></span>
+          <select class="emp-status" data-index="${idx}">
+            ${STATUSES.map(s => `<option value="${s}">${s}</option>`).join('')}
+          </select>
+        </div>
+      `).join('');
     }
 
     function updateAutoShift() {
@@ -354,14 +400,10 @@
       const date = dateInput.value;
       const shift = shiftSelect.value;
       const record = records.find(r => r.date === date && r.shift === shift);
-      const checkboxes = document.querySelectorAll('#employeeCheckboxes input[type="checkbox"]');
-      checkboxes.forEach(cb => {
-        const idx = parseInt(cb.value);
-        if (EMPLOYEES[idx]?.alwaysAbsent) {
-          cb.checked = false;
-        } else {
-          cb.checked = record ? record.present.includes(idx) : false;
-        }
+      const selects = document.querySelectorAll('.emp-status');
+      selects.forEach(sel => {
+        const idx = parseInt(sel.dataset.index);
+        sel.value = record ? record.statuses[idx] : 'Пришёл';
       });
     }
 
@@ -378,23 +420,81 @@
         attendanceMsg.textContent = '❌ Выберите дату';
         return;
       }
-      const checked = [...document.querySelectorAll('#employeeCheckboxes input[type="checkbox"]:not([disabled]):checked')]
-        .map(cb => parseInt(cb.value));
+      const statuses = [...document.querySelectorAll('.emp-status')].map(sel => sel.value);
       
+      // Удаляем старую запись на эту дату+смену, если есть
       records = records.filter(r => !(r.date === date && r.shift === shift));
-      records.push({ date, shift, present: checked });
+      records.push({ date, shift, statuses });
       saveRecords();
       attendanceMsg.textContent = '✅ Явка сохранена';
       renderHistory();
     });
 
     clearAttendanceBtn.addEventListener('click', () => {
-      document.querySelectorAll('#employeeCheckboxes input[type="checkbox"]:not([disabled])').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.emp-status').forEach(sel => sel.value = 'Пришёл');
       attendanceMsg.textContent = '';
     });
 
+    printCurrentReportBtn.addEventListener('click', () => {
+      const date = dateInput.value;
+      const shift = shiftSelect.value;
+      if (!date) {
+        alert('Выберите дату');
+        return;
+      }
+      const statuses = [...document.querySelectorAll('.emp-status')].map(sel => sel.value);
+      printReport(date, shift, statuses);
+    });
+
     // ==========================
-    // 8. ИСТОРИЯ
+    // 8. ПЕЧАТЬ ОТЧЁТА (НОВЫЙ ФОРМАТ)
+    // ==========================
+    function printReport(date, shift, statusesOverride) {
+      let statuses = statusesOverride;
+      if (!statuses) {
+        // Если не переданы — ищем сохранённые или ставим "Не указан"
+        const record = records.find(r => r.date === date && r.shift === shift);
+        statuses = record ? record.statuses : EMPLOYEES.map(() => 'Не указан');
+      }
+
+      const now = new Date();
+      const dateTimeStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+        ' ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      
+      const shiftTimeStr = shift === 'day' ? 'Дневная (08:00 – 20:00)' : 'Ночная (20:00 – 08:00)';
+      
+      const totalStaff = EMPLOYEES.length;
+      const presentCount = statuses.filter(s => s === 'Пришёл').length;
+
+      // Заполняем шапку
+      repDateTime.textContent = dateTimeStr;
+      repShiftInfo.textContent = `${shiftTimeStr} | Дата смены: ${date}`;
+      repTotalStaff.textContent = totalStaff;
+      repPresentCount.textContent = presentCount;
+
+      // Заполняем таблицу
+      repTableBody.innerHTML = EMPLOYEES.map((emp, idx) => {
+        const status = statuses[idx] || 'Не указан';
+        let statusClass = '';
+        if (status === 'Пришёл') statusClass = 'status-present';
+        else if (status === 'Не пришёл') statusClass = 'status-absent';
+        else statusClass = 'status-other';
+        return `<tr>
+          <td>${idx + 1}</td>
+          <td>${emp.category}</td>
+          <td>${emp.name}</td>
+          <td class="${statusClass}">${status}</td>
+        </tr>`;
+      }).join('');
+
+      repSummaryPresent.textContent = presentCount;
+      repSummaryAbsent.textContent = totalStaff - presentCount;
+
+      window.print();
+    }
+
+    // ==========================
+    // 9. ИСТОРИЯ И ФИЛЬТРАЦИЯ
     // ==========================
     function renderHistory() {
       historyFilterSelect.innerHTML = '<option value="">Все</option>' +
@@ -403,17 +503,22 @@
       const filterEmpIdx = historyFilterSelect.value;
       let filtered = [...records].reverse();
       if (filterEmpIdx !== '') {
-        filtered = filtered.filter(r => r.present.includes(parseInt(filterEmpIdx)));
+        filtered = filtered.filter(r => {
+          const status = r.statuses[parseInt(filterEmpIdx)];
+          return status && status !== 'Не указан';
+        });
       }
 
       historyList.innerHTML = filtered.length === 0
         ? '<p>Записей нет</p>'
         : filtered.map(r => {
-            const names = r.present.map(i => EMPLOYEES[i].name).join(', ') || '—';
+            const presentCount = r.statuses.filter(s => s === 'Пришёл').length;
             const shiftEmoji = r.shift === 'day' ? '🌞' : '🌜';
-            const shiftLabel = r.shift === 'day' ? 'День (08:00–20:00)' : 'Ночь (20:00–08:00)';
             return `<div class="history-item">
-              <span><strong>${r.date}</strong> ${shiftEmoji} ${shiftLabel}: ${names}</span>
+              <span>
+                <strong>${r.date}</strong> ${shiftEmoji} ${r.shift === 'day' ? 'День' : 'Ночь'} 
+                | Присутствовало: ${presentCount}/${EMPLOYEES.length}
+              </span>
               <span>
                 <button class="small-btn print-report-btn" data-date="${r.date}" data-shift="${r.shift}">🖨 Отчёт</button>
                 <button class="small-btn danger delete-record-btn" data-date="${r.date}" data-shift="${r.shift}">🗑</button>
@@ -421,13 +526,21 @@
             </div>`;
           }).join('');
 
+      // Вешаем обработчики
       document.querySelectorAll('.print-report-btn').forEach(btn => {
-        btn.addEventListener('click', () => printReport(btn.dataset.date, btn.dataset.shift));
+        btn.addEventListener('click', () => {
+          const date = btn.dataset.date;
+          const shift = btn.dataset.shift;
+          const record = records.find(r => r.date === date && r.shift === shift);
+          printReport(date, shift, record ? record.statuses : null);
+        });
       });
       document.querySelectorAll('.delete-record-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           if (!confirm('Удалить эту запись?')) return;
-          records = records.filter(r => !(r.date === btn.dataset.date && r.shift === btn.dataset.shift));
+          const date = btn.dataset.date;
+          const shift = btn.dataset.shift;
+          records = records.filter(r => !(r.date === date && r.shift === shift));
           saveRecords();
           renderHistory();
         });
@@ -437,78 +550,23 @@
     historyFilterSelect.addEventListener('change', renderHistory);
 
     // ==========================
-    // 9. НОВЫЙ ФОРМАТ ОТЧЁТА
-    // ==========================
-    function printReport(date, shift) {
-      const record = records.find(r => r.date === date && r.shift === shift);
-      
-      // Дата и время отчёта
-      const now = new Date();
-      const dateTimeStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
-        ' ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-      repDateTime.textContent = dateTimeStr;
-
-      // Смена
-      if (shift === 'day') {
-        repShiftInfo.textContent = 'Дневная, с 08:00 до 20:00';
-      } else {
-        repShiftInfo.textContent = 'Ночная, с 20:00 до 08:00';
-      }
-
-      // Формируем список ВСЕХ 14 сотрудников с их статусами
-      const presentSet = new Set(record ? record.present : []);
-      let presentCount = 0;
-      let listHTML = '';
-
-      EMPLOYEES.forEach((emp, idx) => {
-        const num = idx + 1;
-        const roleStr = emp.role ? emp.role + ' — ' : '';
-
-        if (emp.alwaysAbsent) {
-          // Уволен — всегда показываем с пометкой
-          listHTML += `<div>${num}) ${roleStr}${emp.name} — ${emp.reason}</div>`;
-        } else if (presentSet.has(idx)) {
-          presentCount++;
-          listHTML += `<div>${num}) ${roleStr}${emp.name} — пришёл</div>`;
-        } else {
-          listHTML += `<div>${num}) ${roleStr}${emp.name} — не пришёл</div>`;
-        }
-      });
-
-      repPresentCount.textContent = presentCount;
-      repEmployeesList.innerHTML = listHTML;
-
-      window.print();
-    }
-
-    printLastReportBtn.addEventListener('click', () => {
-      if (records.length === 0) {
-        alert('Нет записей');
-        return;
-      }
-      const last = records[records.length - 1];
-      printReport(last.date, last.shift);
-    });
-
-    // ==========================
-    // 10. ЭКСПОРТ / ИМПОРТ (без изменений)
+    // 10. ЭКСПОРТ
     // ==========================
     function exportJson() {
       const blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
-      downloadBlob(blob, 'attendance.json');
+      downloadBlob(blob, 'attendance_FS.json');
     }
     function exportCsv() {
-      let csv = 'Дата;Смена;Сотрудник;Должность;Статус\n';
+      let csv = 'Дата;Смена;';
+      EMPLOYEES.forEach(e => csv += `${e.name} (${e.category});`);
+      csv += '\n';
       records.forEach(r => {
-        const presentSet = new Set(r.present);
-        EMPLOYEES.forEach((emp, idx) => {
-          let status = presentSet.has(idx) ? 'пришёл' : 'не пришёл';
-          if (emp.alwaysAbsent) status = emp.reason || 'уволился';
-          csv += `${r.date};${r.shift === 'day' ? 'День' : 'Ночь'};${emp.name};${emp.role};${status}\n`;
-        });
+        csv += `${r.date};${r.shift === 'day' ? 'День' : 'Ночь'};`;
+        r.statuses.forEach(s => csv += `${s};`);
+        csv += '\n';
       });
       const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-      downloadBlob(blob, 'attendance_full.csv');
+      downloadBlob(blob, 'attendance_FS.csv');
     }
     function downloadBlob(blob, filename) {
       const url = URL.createObjectURL(blob);
@@ -521,6 +579,9 @@
     exportJsonBtn.addEventListener('click', exportJson);
     exportCsvBtn.addEventListener('click', exportCsv);
 
+    // ==========================
+    // 11. ИМПОРТ
+    // ==========================
     importBtn.addEventListener('click', () => {
       const file = importFile.files[0];
       if (!file) { importMsg.textContent = '❌ Выберите файл'; return; }
@@ -537,25 +598,17 @@
           } else if (file.name.endsWith('.csv')) {
             const lines = text.split('\n').filter(l => l.trim());
             if (lines.length < 2) throw new Error('Файл CSV пуст');
-            const newRecords = [];
             const sep = lines[0].includes(';') ? ';' : ',';
+            const newRecords = [];
             for (let i = 1; i < lines.length; i++) {
-              const cols = lines[i].split(sep).map(s => s.trim());
+              const cols = lines[i].split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
               if (cols.length < 3) continue;
               const date = cols[0];
               const shift = cols[1].startsWith('Д') ? 'day' : 'night';
-              const empName = cols[2];
-              const status = cols[4] || '';
-              const empIdx = EMPLOYEES.findIndex(e => e.name === empName);
-              if (empIdx === -1 || EMPLOYEES[empIdx].alwaysAbsent) continue;
-              if (status === 'пришёл') {
-                let rec = newRecords.find(r => r.date === date && r.shift === shift);
-                if (!rec) {
-                  rec = { date, shift, present: [] };
-                  newRecords.push(rec);
-                }
-                if (!rec.present.includes(empIdx)) rec.present.push(empIdx);
-              }
+              const statuses = cols.slice(2, 2 + EMPLOYEES.length);
+              // Дополняем до нужной длины
+              while (statuses.length < EMPLOYEES.length) statuses.push('Не указан');
+              newRecords.push({ date, shift, statuses: statuses.slice(0, EMPLOYEES.length) });
             }
             records = newRecords;
             saveRecords();
@@ -572,7 +625,7 @@
     });
 
     // ==========================
-    // 11. СБРОС ДАННЫХ
+    // 12. СБРОС ДАННЫХ
     // ==========================
     resetDataBtn.addEventListener('click', () => {
       if (confirm('Вы уверены? Все записи будут безвозвратно удалены.')) {
@@ -584,7 +637,7 @@
     });
 
     // ==========================
-    // 12. НАСТРОЙКА ЦИКЛА
+    // 13. НАСТРОЙКА ЦИКЛА СМЕН
     // ==========================
     cycleStartInput.value = getCycleStart();
     saveCycleStartBtn.addEventListener('click', () => {
@@ -596,10 +649,10 @@
     });
 
     // ==========================
-    // 13. ИНИЦИАЛИЗАЦИЯ
+    // 14. ИНИЦИАЛИЗАЦИЯ
     // ==========================
     loadRecords();
-    renderCheckboxes();
+    renderEmployeeStatusGrid();
     dateInput.valueAsDate = new Date();
     updateAutoShift();
     loadAttendanceForm();
