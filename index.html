@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Учёт явки сотрудников</title>
+  <title>Учёт явки сотрудников — Объект ФС</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -22,7 +22,7 @@
       color: var(--text);
       line-height: 1.6;
       padding: 1rem;
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
     }
     .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
@@ -63,15 +63,17 @@
 
     .checkbox-list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      grid-template-columns: 1fr;
       gap: 0.5rem;
       margin: 1rem 0;
     }
     .checkbox-list label {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.5rem;
       font-weight: normal;
+      padding: 0.3rem;
+      border-bottom: 1px solid #eee;
     }
 
     .history-item {
@@ -84,12 +86,25 @@
     }
     .history-item button { margin-left: 0.5rem; }
 
+    /* Стили для печатного отчёта */
     #reportPrintArea {
       display: none;
-      padding: 2rem;
+      padding: 20px;
       background: white;
-      font-size: 1rem;
+      font-family: 'Times New Roman', serif;
+      font-size: 14pt;
+      line-height: 1.5;
+      max-width: 210mm;
+      margin: 0 auto;
     }
+    #reportPrintArea h2 { text-align: center; font-size: 16pt; margin-bottom: 5px; }
+    #reportPrintArea h3 { text-align: center; font-size: 14pt; font-weight: normal; margin: 5px 0; }
+    #reportPrintArea .report-header { text-align: center; margin-bottom: 15px; }
+    #reportPrintArea .report-meta { margin: 10px 0; }
+    #reportPrintArea .report-list { margin: 10px 0 20px 0; }
+    #reportPrintArea .report-list div { padding: 2px 0; }
+    #reportPrintArea .signature { margin-top: 30px; }
+
     @media print {
       body * { visibility: hidden; }
       #reportPrintArea, #reportPrintArea * { visibility: visible; }
@@ -100,14 +115,16 @@
         width: 100%;
         display: block !important;
       }
+      @page { margin: 15mm; }
     }
 
     .employee-filter { margin-bottom: 1rem; }
     .small-btn { font-size: 0.85rem; padding: 0.25rem 0.6rem; }
+    .fired-note { color: #888; font-style: italic; }
   </style>
 </head>
 <body>
-  <h1>👥 Учёт явки</h1>
+  <h1>👥 Учёт явки — Объект ФС, Модуль 52.2</h1>
 
   <!-- Вкладки -->
   <div class="tabs">
@@ -126,13 +143,13 @@
     <div class="form-group">
       <label>Смена</label>
       <select id="shiftSelect">
-        <option value="day">🌞 Дневная</option>
-        <option value="night">🌜 Ночная</option>
+        <option value="day">🌞 Дневная (08:00–20:00)</option>
+        <option value="night">🌜 Ночная (20:00–08:00)</option>
       </select>
       <small id="autoShiftHint" style="display:block;margin-top:0.25rem;color:#6c757d;"></small>
     </div>
 
-    <h3>Сотрудники</h3>
+    <h3>Сотрудники (отметьте присутствующих)</h3>
     <div class="checkbox-list" id="employeeCheckboxes"></div>
 
     <div style="margin-top:1rem; display:flex; gap:1rem; flex-wrap:wrap;">
@@ -179,33 +196,54 @@
     <button id="saveCycleStartBtn" class="small-btn" style="margin-left:0.5rem;">Сохранить</button>
   </div>
 
-  <!-- Скрытая область для печати отчёта -->
+  <!-- Скрытая область для печати отчёта (новый формат) -->
   <div id="reportPrintArea">
-    <h2 style="text-align:center;">Отчёт о явке</h2>
-    <p><strong>Дата:</strong> <span id="repDate"></span></p>
-    <p><strong>Смена:</strong> <span id="repShift"></span></p>
-    <p><strong>Присутствовали:</strong></p>
-    <div id="repEmployees"></div>
-    <p style="margin-top:2rem;">____________________  (подпись)</p>
+    <div class="report-header">
+      <h2>ОТЧЁТ О ЯВКЕ СОТРУДНИКОВ</h2>
+      <h3>Объект ФС</h3>
+      <h3>Модуль 52.2</h3>
+    </div>
+    <div class="report-meta">
+      <p><strong>Дата и время отчёта:</strong> <span id="repDateTime"></span></p>
+      <p><strong>Смена:</strong> <span id="repShiftInfo"></span></p>
+      <p><strong>По штату:</strong> 14 человек</p>
+      <p><strong>Вышли:</strong> <span id="repPresentCount"></span> человек</p>
+    </div>
+    <div class="report-list" id="repEmployeesList"></div>
+    <div class="signature">
+      <p>____________________  (подпись ответственного)</p>
+    </div>
   </div>
 
   <script>
     // ==========================
-    // 1. КОНФИГУРАЦИЯ
+    // 1. КОНФИГУРАЦИЯ — 14 сотрудников с должностями
     // ==========================
     const EMPLOYEES = [
-      "Иванов А.А.", "Петров Б.Б.", "Сидоров В.В.", "Кузнецов Г.Г.", "Смирнова Д.Д.",
-      "Васильев Е.Е.", "Фёдоров Ж.Ж.", "Кириллова З.З.", "Алексеев И.И.", "Николаева К.К.",
-      "Орлов Л.Л.", "Андреев М.М.", "Тарасова Н.Н.", "Белов О.О.", "Морозов П.П."
+      { name: "Юмашев А.А.",         role: "ГС",        alwaysAbsent: false },
+      { name: "Просвирин А.А.",      role: "ВС",        alwaysAbsent: false },
+      { name: "Егоров Д.Д.",         role: "СП",        alwaysAbsent: false },
+      { name: "Сыченко А.В.",        role: "СП",        alwaysAbsent: false },
+      { name: "Оразбаев Ильназ К.",  role: "МС",        alwaysAbsent: false },
+      { name: "Набиев Д.М.",         role: "МС",        alwaysAbsent: false },
+      { name: "Посадов Д.А.",        role: "МС",        alwaysAbsent: false },
+      { name: "Савельев",            role: "СП",        alwaysAbsent: false },
+      { name: "Габдуллин А.Ф.",      role: "",          alwaysAbsent: false },
+      { name: "Енчуков А.",          role: "СП",        alwaysAbsent: false },
+      { name: "Павлов А.В.",         role: "МС",        alwaysAbsent: true, reason: "уволился" },
+      { name: "Васянович В.А.",      role: "МС",        alwaysAbsent: false },
+      { name: "Чхве Чхоль Су",       role: "практикант",alwaysAbsent: false },
+      { name: "Чхве Кван Хёк",       role: "практикант",alwaysAbsent: false },
     ];
+
     const STORAGE_KEY = 'attendanceData';
     const CYCLE_START_KEY = 'cycleStartDate';
-    const CYCLE_DAYS = 6;         // 2 day + 2 night + 2 off
+    const CYCLE_DAYS = 6;
 
     // ==========================
     // 2. ДАННЫЕ
     // ==========================
-    let records = [];   // { date: 'YYYY-MM-DD', shift: 'day'|'night', present: [индексы 0..14] }
+    let records = [];   // { date: 'YYYY-MM-DD', shift: 'day'|'night', present: [индексы] }
 
     // ==========================
     // 3. ЗАГРУЗКА И СОХРАНЕНИЕ
@@ -218,7 +256,7 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
     }
     function getCycleStart() {
-      return localStorage.getItem(CYCLE_START_KEY) || '2026-01-01'; // заглушка
+      return localStorage.getItem(CYCLE_START_KEY) || '2026-01-01';
     }
     function setCycleStart(dateStr) {
       localStorage.setItem(CYCLE_START_KEY, dateStr);
@@ -234,9 +272,9 @@
       const diffDays = Math.floor((target - start) / (1000 * 60 * 60 * 24));
       if (diffDays < 0) return 'day';
       const cyclePos = diffDays % CYCLE_DAYS;
-      if (cyclePos < 2) return 'day';      // дни 0-1
-      if (cyclePos < 4) return 'night';    // дни 2-3
-      return 'off';                         // дни 4-5 (выходной)
+      if (cyclePos < 2) return 'day';
+      if (cyclePos < 4) return 'night';
+      return 'off';
     }
 
     // ==========================
@@ -262,9 +300,11 @@
     const resetDataBtn = document.getElementById('resetDataBtn');
     const cycleStartInput = document.getElementById('cycleStartDate');
     const saveCycleStartBtn = document.getElementById('saveCycleStartBtn');
-    const repDate = document.getElementById('repDate');
-    const repShift = document.getElementById('repShift');
-    const repEmployees = document.getElementById('repEmployees');
+    // Элементы печатного отчёта
+    const repDateTime = document.getElementById('repDateTime');
+    const repShiftInfo = document.getElementById('repShiftInfo');
+    const repPresentCount = document.getElementById('repPresentCount');
+    const repEmployeesList = document.getElementById('repEmployeesList');
 
     // ==========================
     // 6. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
@@ -283,11 +323,18 @@
     // 7. ОТМЕТКА ЯВКИ
     // ==========================
     function renderCheckboxes() {
-      checkboxContainer.innerHTML = EMPLOYEES.map((name, idx) => `
-        <label>
-          <input type="checkbox" value="${idx}" /> ${name}
-        </label>
-      `).join('');
+      checkboxContainer.innerHTML = EMPLOYEES.map((emp, idx) => {
+        if (emp.alwaysAbsent) {
+          return `<label style="color:#888;">
+            <input type="checkbox" value="${idx}" disabled />
+            ${emp.role ? emp.role + ' — ' : ''}${emp.name} — ${emp.reason || 'уволился'}
+          </label>`;
+        }
+        return `<label>
+          <input type="checkbox" value="${idx}" />
+          ${emp.role ? emp.role + ' — ' : ''}${emp.name}
+        </label>`;
+      }).join('');
     }
 
     function updateAutoShift() {
@@ -295,24 +342,26 @@
       if (!dateVal) return;
       const type = calcShiftType(dateVal);
       autoShiftHint.textContent = `По графику: ${type === 'day' ? '🌞 Дневная' : type === 'night' ? '🌜 Ночная' : '🚫 Выходной'}`;
-      // Автоматически устанавливаем смену, если это рабочий день
       if (type === 'day' || type === 'night') {
         shiftSelect.value = type;
       } else {
-        // Выходной, но даём возможность выбрать вручную
         shiftSelect.value = 'day';
-        autoShiftHint.textContent += ' (но можно отметить вручную)';
+        autoShiftHint.textContent += ' (можно отметить вручную)';
       }
     }
 
     function loadAttendanceForm() {
       const date = dateInput.value;
       const shift = shiftSelect.value;
-      // Ищем существующую запись
       const record = records.find(r => r.date === date && r.shift === shift);
       const checkboxes = document.querySelectorAll('#employeeCheckboxes input[type="checkbox"]');
       checkboxes.forEach(cb => {
-        cb.checked = record ? record.present.includes(parseInt(cb.value)) : false;
+        const idx = parseInt(cb.value);
+        if (EMPLOYEES[idx]?.alwaysAbsent) {
+          cb.checked = false;
+        } else {
+          cb.checked = record ? record.present.includes(idx) : false;
+        }
       });
     }
 
@@ -329,10 +378,9 @@
         attendanceMsg.textContent = '❌ Выберите дату';
         return;
       }
-      const checked = [...document.querySelectorAll('#employeeCheckboxes input:checked')]
+      const checked = [...document.querySelectorAll('#employeeCheckboxes input[type="checkbox"]:not([disabled]):checked')]
         .map(cb => parseInt(cb.value));
       
-      // Удаляем старую запись на эту дату+смену, если есть
       records = records.filter(r => !(r.date === date && r.shift === shift));
       records.push({ date, shift, present: checked });
       saveRecords();
@@ -341,20 +389,19 @@
     });
 
     clearAttendanceBtn.addEventListener('click', () => {
-      document.querySelectorAll('#employeeCheckboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+      document.querySelectorAll('#employeeCheckboxes input[type="checkbox"]:not([disabled])').forEach(cb => cb.checked = false);
       attendanceMsg.textContent = '';
     });
 
     // ==========================
-    // 8. ИСТОРИЯ И ФИЛЬТРАЦИЯ
+    // 8. ИСТОРИЯ
     // ==========================
     function renderHistory() {
-      // Заполняем фильтр
       historyFilterSelect.innerHTML = '<option value="">Все</option>' +
-        EMPLOYEES.map((name, idx) => `<option value="${idx}">${name}</option>`).join('');
+        EMPLOYEES.map((emp, idx) => `<option value="${idx}">${emp.name}</option>`).join('');
       
       const filterEmpIdx = historyFilterSelect.value;
-      let filtered = [...records].reverse(); // свежие сверху
+      let filtered = [...records].reverse();
       if (filterEmpIdx !== '') {
         filtered = filtered.filter(r => r.present.includes(parseInt(filterEmpIdx)));
       }
@@ -362,10 +409,11 @@
       historyList.innerHTML = filtered.length === 0
         ? '<p>Записей нет</p>'
         : filtered.map(r => {
-            const names = r.present.map(i => EMPLOYEES[i]).join(', ') || '—';
+            const names = r.present.map(i => EMPLOYEES[i].name).join(', ') || '—';
             const shiftEmoji = r.shift === 'day' ? '🌞' : '🌜';
+            const shiftLabel = r.shift === 'day' ? 'День (08:00–20:00)' : 'Ночь (20:00–08:00)';
             return `<div class="history-item">
-              <span><strong>${r.date}</strong> ${shiftEmoji} ${r.shift === 'day' ? 'День' : 'Ночь'}: ${names}</span>
+              <span><strong>${r.date}</strong> ${shiftEmoji} ${shiftLabel}: ${names}</span>
               <span>
                 <button class="small-btn print-report-btn" data-date="${r.date}" data-shift="${r.shift}">🖨 Отчёт</button>
                 <button class="small-btn danger delete-record-btn" data-date="${r.date}" data-shift="${r.shift}">🗑</button>
@@ -373,20 +421,13 @@
             </div>`;
           }).join('');
 
-      // Вешаем обработчики на кнопки отчёта и удаления
       document.querySelectorAll('.print-report-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const date = btn.dataset.date;
-          const shift = btn.dataset.shift;
-          printReport(date, shift);
-        });
+        btn.addEventListener('click', () => printReport(btn.dataset.date, btn.dataset.shift));
       });
       document.querySelectorAll('.delete-record-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           if (!confirm('Удалить эту запись?')) return;
-          const date = btn.dataset.date;
-          const shift = btn.dataset.shift;
-          records = records.filter(r => !(r.date === date && r.shift === shift));
+          records = records.filter(r => !(r.date === btn.dataset.date && r.shift === btn.dataset.shift));
           saveRecords();
           renderHistory();
         });
@@ -396,16 +437,47 @@
     historyFilterSelect.addEventListener('change', renderHistory);
 
     // ==========================
-    // 9. ПЕЧАТЬ ОТЧЁТА
+    // 9. НОВЫЙ ФОРМАТ ОТЧЁТА
     // ==========================
     function printReport(date, shift) {
       const record = records.find(r => r.date === date && r.shift === shift);
-      if (!record) return;
-      repDate.textContent = date;
-      repShift.textContent = shift === 'day' ? 'Дневная' : 'Ночная';
-      repEmployees.innerHTML = record.present.length
-        ? `<ul>${record.present.map(i => `<li>${EMPLOYEES[i]}</li>`).join('')}</ul>`
-        : '<p>Нет отметок</p>';
+      
+      // Дата и время отчёта
+      const now = new Date();
+      const dateTimeStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+        ' ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      repDateTime.textContent = dateTimeStr;
+
+      // Смена
+      if (shift === 'day') {
+        repShiftInfo.textContent = 'Дневная, с 08:00 до 20:00';
+      } else {
+        repShiftInfo.textContent = 'Ночная, с 20:00 до 08:00';
+      }
+
+      // Формируем список ВСЕХ 14 сотрудников с их статусами
+      const presentSet = new Set(record ? record.present : []);
+      let presentCount = 0;
+      let listHTML = '';
+
+      EMPLOYEES.forEach((emp, idx) => {
+        const num = idx + 1;
+        const roleStr = emp.role ? emp.role + ' — ' : '';
+
+        if (emp.alwaysAbsent) {
+          // Уволен — всегда показываем с пометкой
+          listHTML += `<div>${num}) ${roleStr}${emp.name} — ${emp.reason}</div>`;
+        } else if (presentSet.has(idx)) {
+          presentCount++;
+          listHTML += `<div>${num}) ${roleStr}${emp.name} — пришёл</div>`;
+        } else {
+          listHTML += `<div>${num}) ${roleStr}${emp.name} — не пришёл</div>`;
+        }
+      });
+
+      repPresentCount.textContent = presentCount;
+      repEmployeesList.innerHTML = listHTML;
+
       window.print();
     }
 
@@ -419,25 +491,24 @@
     });
 
     // ==========================
-    // 10. ЭКСПОРТ
+    // 10. ЭКСПОРТ / ИМПОРТ (без изменений)
     // ==========================
     function exportJson() {
       const blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
       downloadBlob(blob, 'attendance.json');
     }
     function exportCsv() {
-      // Нормализованный CSV: каждая строка = один выход сотрудника
-      let csv = 'Дата;Смена;Сотрудник\n';
+      let csv = 'Дата;Смена;Сотрудник;Должность;Статус\n';
       records.forEach(r => {
-        r.present.forEach(empIdx => {
-          csv += `${r.date};${r.shift === 'day' ? 'День' : 'Ночь'};${EMPLOYEES[empIdx]}\n`;
+        const presentSet = new Set(r.present);
+        EMPLOYEES.forEach((emp, idx) => {
+          let status = presentSet.has(idx) ? 'пришёл' : 'не пришёл';
+          if (emp.alwaysAbsent) status = emp.reason || 'уволился';
+          csv += `${r.date};${r.shift === 'day' ? 'День' : 'Ночь'};${emp.name};${emp.role};${status}\n`;
         });
-        if (r.present.length === 0) {
-          csv += `${r.date};${r.shift === 'day' ? 'День' : 'Ночь'};—\n`;
-        }
       });
-      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' }); // BOM для Excel
-      downloadBlob(blob, 'attendance.csv');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      downloadBlob(blob, 'attendance_full.csv');
     }
     function downloadBlob(blob, filename) {
       const url = URL.createObjectURL(blob);
@@ -450,15 +521,9 @@
     exportJsonBtn.addEventListener('click', exportJson);
     exportCsvBtn.addEventListener('click', exportCsv);
 
-    // ==========================
-    // 11. ИМПОРТ
-    // ==========================
     importBtn.addEventListener('click', () => {
       const file = importFile.files[0];
-      if (!file) {
-        importMsg.textContent = '❌ Выберите файл';
-        return;
-      }
+      if (!file) { importMsg.textContent = '❌ Выберите файл'; return; }
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -473,23 +538,24 @@
             const lines = text.split('\n').filter(l => l.trim());
             if (lines.length < 2) throw new Error('Файл CSV пуст');
             const newRecords = [];
-            // Определяем разделитель (запятая или точка с запятой)
             const sep = lines[0].includes(';') ? ';' : ',';
             for (let i = 1; i < lines.length; i++) {
               const cols = lines[i].split(sep).map(s => s.trim());
               if (cols.length < 3) continue;
               const date = cols[0];
               const shift = cols[1].startsWith('Д') ? 'day' : 'night';
-              const name = cols[2];
-              const empIdx = EMPLOYEES.indexOf(name);
-              if (empIdx === -1) continue; // пропускаем неизвестных
-              // Ищем запись с такой датой и сменой
-              let rec = newRecords.find(r => r.date === date && r.shift === shift);
-              if (!rec) {
-                rec = { date, shift, present: [] };
-                newRecords.push(rec);
+              const empName = cols[2];
+              const status = cols[4] || '';
+              const empIdx = EMPLOYEES.findIndex(e => e.name === empName);
+              if (empIdx === -1 || EMPLOYEES[empIdx].alwaysAbsent) continue;
+              if (status === 'пришёл') {
+                let rec = newRecords.find(r => r.date === date && r.shift === shift);
+                if (!rec) {
+                  rec = { date, shift, present: [] };
+                  newRecords.push(rec);
+                }
+                if (!rec.present.includes(empIdx)) rec.present.push(empIdx);
               }
-              if (!rec.present.includes(empIdx)) rec.present.push(empIdx);
             }
             records = newRecords;
             saveRecords();
@@ -506,7 +572,7 @@
     });
 
     // ==========================
-    // 12. СБРОС ДАННЫХ
+    // 11. СБРОС ДАННЫХ
     // ==========================
     resetDataBtn.addEventListener('click', () => {
       if (confirm('Вы уверены? Все записи будут безвозвратно удалены.')) {
@@ -518,7 +584,7 @@
     });
 
     // ==========================
-    // 13. НАСТРОЙКА ЦИКЛА СМЕН
+    // 12. НАСТРОЙКА ЦИКЛА
     // ==========================
     cycleStartInput.value = getCycleStart();
     saveCycleStartBtn.addEventListener('click', () => {
@@ -530,7 +596,7 @@
     });
 
     // ==========================
-    // 14. ИНИЦИАЛИЗАЦИЯ
+    // 13. ИНИЦИАЛИЗАЦИЯ
     // ==========================
     loadRecords();
     renderCheckboxes();
